@@ -316,10 +316,46 @@ nav button.crux-btn:hover{background:var(--primary);color:var(--bg-void);}
 .codex-item{
   border-bottom:1px solid var(--line);
   padding:12px 0;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  cursor:pointer;
+  transition:background .2s;
 }
-.codex-item:last-child{border-bottom:none;}
-.codex-item h4{font-size:13px;font-weight:400;color:var(--accent);margin-bottom:4px;}
-.codex-item p{font-size:12px;color:var(--muted);white-space:pre-wrap;}
+.codex-item:hover{background:rgba(107,130,153,0.05);}
+.codex-item-main{flex:1;min-width:0;}
+.codex-item h4{font-size:14px;font-weight:400;color:var(--accent);margin-bottom:4px;}
+.codex-item p{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.codex-item.dragging{
+  background:var(--surface);
+  box-shadow:0 8px 24px rgba(0,0,0,0.5);
+  opacity:0.9;
+  border-bottom:none;
+}
+.drag-placeholder{
+  border-bottom:1px solid var(--line);
+  background:rgba(107,130,153,0.08);
+}
+.drag-handle{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  padding:8px 6px;
+  cursor:grab;
+  touch-action:none;
+  border-radius:2px;
+  transition:background .2s;
+  flex-shrink:0;
+}
+.drag-handle:hover{background:rgba(107,130,153,0.1);}
+.drag-handle:active{cursor:grabbing;}
+.drag-handle span{
+  display:block;
+  width:16px;
+  height:1.5px;
+  background:var(--muted);
+  opacity:0.6;
+}
 
 .sandbox-table{width:100%;border-collapse:collapse;font-size:12px;}
 .sandbox-table th,.sandbox-table td{
@@ -339,7 +375,7 @@ nav button.crux-btn:hover{background:var(--primary);color:var(--bg-void);}
 <header>
   <!-- 左侧区域：按钮靠左 -->
   <div style="display:flex;align-items:center;gap:8px;justify-content:flex-start;flex:1;z-index:1;">
-    <button class="back" id="backBtn" style="visibility:hidden;background:none;border:none;color:var(--muted);font-size:10px;cursor:pointer;">← 返回</button>
+    <button class="back" id="backBtn" style="display:none;background:none;border:none;color:var(--muted);font-size:10px;cursor:pointer;">← 返回</button>
     
     <!-- 这里去掉了边框，改为淡灰色，缩小了字体和间距 -->
     <button id="exportBtn" style="background:none;border:none;color:var(--muted);font-size:10px;padding:4px 6px;cursor:pointer;font-family:inherit;letter-spacing:0.05em;transition:color .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">备份</button>
@@ -406,6 +442,7 @@ let state = {
   currentPage: 'characters',
   currentCharacterId: null,
   currentEventId: null,
+  currentCodexId: null,
   selectedCruxId: null,
 };
 
@@ -470,6 +507,7 @@ function setPage(page){
   state.currentPage = page;
   state.currentCharacterId = null;
   state.currentEventId = null;
+  state.currentCodexId = null;
   render();
 }
 
@@ -477,13 +515,14 @@ function render(){
   document.querySelectorAll('nav button').forEach(b=>{
     b.classList.toggle('active', b.dataset.page === state.currentPage);
   });
-  backBtn.style.visibility = 'hidden';
-  switch(state.currentPage){
-    case 'characters': renderCharacters(); break;
-    case 'codex': renderCodex(); break;
-    case 'crux': renderCrux(); break;
-    case 'events': renderEvents(); break;
-    case 'sandbox': renderSandbox(); break;
+  backBtn.style.display = 'none';
+switch(state.currentPage){
+  case 'characters': renderCharacters(); break;
+  case 'codex': renderCodex(); break;
+  case 'codexDetail': renderCodexDetail(); break;
+  case 'crux': renderCrux(); break;
+  case 'events': renderEvents(); break;
+  case 'sandbox': renderSandbox(); break;
   }
 }
 
@@ -524,7 +563,7 @@ function renderCharacterDetail(){
   const c = state.characters.find(x=>x.id === state.currentCharacterId);
   if(!c){ setPage('characters'); return; }
   pageTitle.textContent = c.name || '角色';
-  backBtn.style.visibility = 'visible';
+  backBtn.style.display = 'inline-block';
   backBtn.onclick = ()=> setPage('characters');
 
   let html = `
@@ -629,15 +668,204 @@ function renderCodex(){
   pageTitle.textContent = '档案柜';
   let html = '<button class="btn" id="addCodexBtn" style="margin-bottom:16px;">+ 新建词条</button>';
   if(state.codex.length === 0){
-    html += '<div class="empty"><span class="star">✧</span>世界观如星河般流淌又凝固。<br>柏石在暗处滋生。</div>';
+    html += '<div class="empty"><span class="star">✧</span>世界观尚未凝固。<br>博石在暗处等待命名。</div>';
   } else {
-    state.codex.forEach(item=>{
+    html += '<div id="codexList">';
+    state.codex.forEach(item => {
+      const summary = item.summary || '';
       html += `<div class="codex-item" data-id="${item.id}">
-        <h4>${escapeHtml(item.title)}</h4>
-        <p>${escapeHtml(item.content)}</p>
+        <div class="codex-item-main">
+          <h4>${escapeHtml(item.title || '未命名词条')}</h4>
+          ${summary ? `<p>${escapeHtml(summary)}</p>` : ''}
+        </div>
+        <div class="drag-handle" title="拖动排序">
+          <span></span><span></span><span></span>
+        </div>
       </div>`;
     });
+    html += '</div>';
   }
+  content.innerHTML = html;
+
+  document.getElementById('addCodexBtn').onclick = () => {
+    const title = prompt('词条名称：');
+    if(!title) return;
+    const summary = prompt('一句话简介（可留空）：') || '';
+    state.codex.push({ id: uid(), title, summary, content: '' });
+    save();
+    renderCodex();
+  };
+
+  content.querySelectorAll('.codex-item').forEach(el => {
+    el.onclick = (e) => {
+      if(e.target.closest('.drag-handle')) return;
+      openCodexDetail(el.dataset.id);
+    };
+  });
+
+  initDragSort();
+}
+
+function openCodexDetail(id){
+  state.currentCodexId = id;
+  state.currentPage = 'codexDetail';
+  renderCodexDetail();
+}
+
+function renderCodexDetail(){
+  const item = state.codex.find(x => x.id === state.currentCodexId);
+  if(!item){ setPage('codex'); return; }
+  pageTitle.textContent = item.title || '词条';
+  backBtn.style.display = 'inline-block';
+  backBtn.onclick = () => setPage('codex');
+
+  let html = `
+    <div class="section">
+      <div class="section-title">词条</div>
+      <div class="section-body">
+        <div class="field">
+          <label>大标题</label>
+          <input data-field="title" value="${escapeAttr(item.title || '')}">
+        </div>
+        <div class="field">
+          <label>一句话简介</label>
+          <input data-field="summary" value="${escapeAttr(item.summary || '')}">
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">详细介绍</div>
+      <div class="section-body">
+        <div class="field">
+          <textarea data-field="content" style="min-height:200px;font-size:12px;line-height:1.7;">${escapeHtml(item.content || '')}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn danger" id="deleteCodex" style="margin-top:8px;">删除词条</button>
+  `;
+  content.innerHTML = html;
+
+  content.querySelectorAll('[data-field]').forEach(el => {
+    el.oninput = () => {
+      item[el.dataset.field] = el.value;
+      if(el.dataset.field === 'title') pageTitle.textContent = el.value || '词条';
+      save();
+    };
+  });
+
+  document.getElementById('deleteCodex').onclick = () => {
+    if(confirm('确定删除这个词条？')){
+      state.codex = state.codex.filter(x => x.id !== item.id);
+      save();
+      setPage('codex');
+    }
+  };
+}
+
+function initDragSort(){
+  const list = document.getElementById('codexList');
+  if(!list) return;
+
+  let draggingEl = null;
+  let placeholder = null;
+  let pointerDownY = 0;
+  let pointerDownTop = 0;
+
+  function onMove(e){
+    if(!draggingEl) return;
+    const deltaY = e.clientY - pointerDownY;
+    const newTop = pointerDownTop + deltaY;
+    draggingEl.style.top = newTop + 'px';
+
+    const draggedCenter = newTop + draggingEl.offsetHeight / 2;
+    const items = Array.from(list.querySelectorAll('.codex-item:not(.dragging)'));
+
+    let target = null;
+    for(const it of items){
+      const r = it.getBoundingClientRect();
+      if(draggedCenter < r.top + r.height / 2){
+        target = it;
+        break;
+      }
+    }
+
+    if(target){
+      if(placeholder.nextSibling !== target){
+        list.insertBefore(placeholder, target);
+      }
+    } else {
+      if(list.lastChild !== placeholder){
+        list.appendChild(placeholder);
+      }
+    }
+  }
+
+  function onUp(){
+    if(!draggingEl) return;
+    const parent = placeholder.parentNode;
+    parent.insertBefore(draggingEl, placeholder);
+    parent.removeChild(placeholder);
+
+    draggingEl.style.position = '';
+    draggingEl.style.left = '';
+    draggingEl.style.top = '';
+    draggingEl.style.width = '';
+    draggingEl.style.zIndex = '';
+    draggingEl.style.pointerEvents = '';
+    draggingEl.style.opacity = '';
+    draggingEl.style.boxShadow = '';
+    draggingEl.style.background = '';
+    draggingEl.classList.remove('dragging');
+
+    const newOrder = Array.from(list.querySelectorAll('.codex-item')).map(el => el.dataset.id);
+    state.codex.sort((a, b) => newOrder.indexOf(a.id) - newOrder.indexOf(b.id));
+    save();
+
+    draggingEl = null;
+    placeholder = null;
+
+    document.removeEventListener('pointermove', onMove);
+    document.removeEventListener('pointerup', onUp);
+    document.removeEventListener('pointercancel', onUp);
+  }
+
+  list.querySelectorAll('.drag-handle').forEach(handle => {
+    handle.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      const item = handle.closest('.codex-item');
+      if(!item) return;
+
+      draggingEl = item;
+      pointerDownY = e.clientY;
+      const rect = item.getBoundingClientRect();
+      pointerDownTop = rect.top;
+
+      placeholder = document.createElement('div');
+      placeholder.className = 'drag-placeholder';
+      placeholder.style.height = rect.height + 'px';
+      placeholder.style.marginBottom = getComputedStyle(item).marginBottom;
+
+      list.insertBefore(placeholder, item);
+
+      item.style.position = 'fixed';
+      item.style.left = rect.left + 'px';
+      item.style.top = rect.top + 'px';
+      item.style.width = rect.width + 'px';
+      item.style.zIndex = '999';
+      item.style.pointerEvents = 'none';
+      item.style.background = 'var(--surface)';
+      item.style.opacity = '0.9';
+      item.style.boxShadow = '0 8px 24px rgba(0,0,0,0.5)';
+      item.classList.add('dragging');
+
+      document.addEventListener('pointermove', onMove);
+      document.addEventListener('pointerup', onUp);
+      document.addEventListener('pointercancel', onUp);
+    });
+  });
+}
   content.innerHTML = html;
   document.getElementById('addCodexBtn').onclick = ()=>{
     const title = prompt('词条名称：');
@@ -741,7 +969,7 @@ function renderEventDetail(){
   const ev = state.events.find(x=>x.id === state.currentEventId);
   if(!ev){ setPage('events'); return; }
   pageTitle.textContent = ev.name || '事件';
-  backBtn.style.visibility = 'visible';
+  backBtn.style.display = 'inline-block';
   backBtn.onclick = ()=> setPage('events');
 
   const charChecks = state.characters.map(c=>`
