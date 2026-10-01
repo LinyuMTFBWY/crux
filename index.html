@@ -516,13 +516,13 @@ function render(){
     b.classList.toggle('active', b.dataset.page === state.currentPage);
   });
   backBtn.style.display = 'none';
-switch(state.currentPage){
-  case 'characters': renderCharacters(); break;
-  case 'codex': renderCodex(); break;
-  case 'codexDetail': renderCodexDetail(); break;
-  case 'crux': renderCrux(); break;
-  case 'events': renderEvents(); break;
-  case 'sandbox': renderSandbox(); break;
+  switch(state.currentPage){
+    case 'characters': renderCharacters(); break;
+    case 'codex': renderCodex(); break;
+    case 'codexDetail': renderCodexDetail(); break;
+    case 'crux': renderCrux(); break;
+    case 'events': renderEvents(); break;
+    case 'sandbox': renderSandbox(); break;
   }
 }
 
