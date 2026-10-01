@@ -78,8 +78,18 @@ nav button.crux-btn:hover{background:var(--primary);color:var(--bg-void);}
 .codex-item{border-bottom:1px solid var(--line);padding:12px 0;display:flex;align-items:center;gap:12px;cursor:pointer;transition:background .2s;}
 .codex-item:hover{background:rgba(107,130,153,0.05);}
 .codex-item-main{flex:1;min-width:0;}
-.codex-item h4{font-size:14px;font-weight:400;color:var(--accent);margin-bottom:4px;}
-.codex-item p{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.codex-item h4{font-size:14px;font-weight:400;color:var(--accent);margin-bottom:4px;line-height:1.4;}
+.codex-item .codex-summary{
+  font-size:11.5px;
+  color:var(--muted);
+  line-height:1.5;
+  display:-webkit-box;
+  -webkit-line-clamp:2;
+  -webkit-box-orient:vertical;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  letter-spacing:0.02em;
+}
 .codex-item.dragging{background:var(--surface);box-shadow:0 8px 24px rgba(0,0,0,0.5);opacity:0.9;border-bottom:none;}
 .drag-placeholder{border-bottom:1px solid var(--line);background:rgba(107,130,153,0.08);}
 .drag-handle{display:flex;flex-direction:column;gap:3px;padding:8px 6px;cursor:grab;touch-action:none;border-radius:2px;transition:background .2s;flex-shrink:0;}
@@ -333,16 +343,20 @@ function renderCodex(){
     html += '<div class="empty"><span class="star">✧</span>世界观尚未凝固。<br>博石在暗处等待命名。</div>';
   } else {
     html += '<div id="codexList">';
-    state.codex.forEach(item=>{
-      const summary = item.summary || '';
-      html += `<div class="codex-item" data-id="${item.id}">
-        <div class="codex-item-main">
-          <h4>${escapeHtml(item.title || '未命名词条')}</h4>
-          ${summary ? `<p>${escapeHtml(summary)}</p>` : ''}
-        </div>
-        <div class="drag-handle" title="拖动排序"><span></span><span></span><span></span></div>
-      </div>`;
-    });
+state.codex.forEach(item=>{
+  let preview = item.summary || '';
+  if(!preview && item.content){
+    preview = String(item.content).replace(/\s+/g, ' ').trim().slice(0, 60);
+    if(item.content.length > 60) preview += '…';
+  }
+  html += `<div class="codex-item" data-id="${item.id}">
+    <div class="codex-item-main">
+      <h4>${escapeHtml(item.title || '未命名词条')}</h4>
+      ${preview ? `<div class="codex-summary">${escapeHtml(preview)}</div>` : ''}
+    </div>
+    <div class="drag-handle" title="拖动排序"><span></span><span></span><span></span></div>
+  </div>`;
+});
     html += '</div>';
   }
   content.innerHTML = html;
