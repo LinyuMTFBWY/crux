@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>CRUX</title>
+<style>
+:root{
+  --bg-void:#0B0F14;
+  --bg-haze:#141B22;
+  --surface:#1E2832;
+  --primary:#6B8299;
+  --accent:#9FC3D9;
+  --text:#E8EEF2;
+  --muted:#8A9BA8;
+  --warning:#C25B5B;
+  --secret:#2A2F45;
+  --line:#2A3540;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--bg-void);
+  color:var(--text);
+  font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  font-weight:300;
+  line-height:1.7;
+  letter-spacing:0.01em;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+#app{
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+  max-width:720px;
+  margin:0 auto;
+  width:100%;
+  background:var(--bg-haze);
+  border-left:1px solid var(--line);
+  border-right:1px solid var(--line);
+}
+header{
+  padding:18px 20px 14px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:var(--bg-void);
+  flex-shrink:0;
+}
+header h1{
+  font-size:15px;
+  font-weight:400;
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  color:var(--accent);
+}
+header .back{
+  background:none;
+  border:1px solid var(--line);
+  color:var(--muted);
+  padding:4px 12px;
+  font-size:12px;
+  cursor:pointer;
+  letter-spacing:0.05em;
+}
+header .back:hover{color:var(--text);border-color:var(--primary);}
+main{
+  flex:1;
+  overflow-y:auto;
+  padding:16px 16px 80px;
+  -webkit-overflow-scrolling:touch;
+}
+nav{
+  display:flex;
+  border-top:1px solid var(--line);
+  background:var(--bg-void);
+  flex-shrink:0;
+  height:64px;
+  align-items:center;
+  justify-content:space-around;
+  position:relative;
+}
+nav button{
+  background:none;
+  border:none;
+  color:var(--muted);
+  font-size:11px;
+  letter-spacing:0.08em;
+  cursor:pointer;
+  padding:8px 4px;
+  font-family:inherit;
+  transition:color .3s;
+  flex:1;
+  text-align:center;
+}
+nav button.active{color:var(--accent);}
+nav button.crux-btn{
+  color:var(--accent);
+  font-size:13px;
+  font-weight:500;
+  letter-spacing:0.2em;
+  position:relative;
+  top:-12px;
+  background:var(--surface);
+  border:1px solid var(--primary);
+  width:56px;
+  height:56px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 56px;
+  margin:0 4px;
+  box-shadow:0 0 24px rgba(107,130,153,0.25);
+}
+nav button.crux-btn:hover{background:var(--primary);color:var(--bg-void);}
+
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  padding:16px;
+  margin-bottom:12px;
+  cursor:pointer;
+  transition:border-color .2s;
+  position:relative;
+}
+.card:hover{border-color:var(--primary);}
+.card h3{
+  font-size:15px;
+  font-weight:400;
+  letter-spacing:0.05em;
+  margin-bottom:4px;
+  color:var(--text);
+}
+.card p{font-size:12px;color:var(--muted);}
+.card .tag{
+  display:inline-block;
+  font-size:10px;
+  border:1px solid var(--line);
+  padding:1px 8px;
+  margin-right:6px;
+  margin-top:6px;
+  color:var(--muted);
+  letter-spacing:0.05em;
+}
+.empty{
+  text-align:center;
+  color:var(--muted);
+  font-size:13px;
+  padding:60px 20px;
+  letter-spacing:0.05em;
+}
+.empty .star{font-size:24px;display:block;margin-bottom:12px;color:var(--primary);}
+
+.section{
+  margin-bottom:20px;
+  border:1px solid var(--line);
+  background:var(--surface);
+}
+.section-title{
+  font-size:11px;
+  letter-spacing:0.15em;
+  text-transform:uppercase;
+  color:var(--accent);
+  padding:10px 14px;
+  border-bottom:1px solid var(--line);
+  background:rgba(11,15,20,0.4);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.section-body{padding:12px 14px;}
+.field{margin-bottom:10px;}
+.field label{
+  display:block;
+  font-size:10px;
+  color:var(--muted);
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  margin-bottom:4px;
+}
+.field input,.field textarea{
+  width:100%;
+  background:var(--bg-void);
+  border:1px solid var(--line);
+  color:var(--text);
+  padding:8px 10px;
+  font-size:13px;
+  font-family:inherit;
+  font-weight:300;
+  outline:none;
+  transition:border-color .2s;
+  resize:vertical;
+}
+.field input:focus,.field textarea:focus{border-color:var(--primary);}
+.field textarea{min-height:60px;line-height:1.6;}
+.field .row{display:flex;gap:8px;}
+.field .row input{flex:1;}
+
+.secret-box{
+  background:var(--secret);
+  border:1px solid #3A4060;
+  padding:12px;
+  position:relative;
+}
+.secret-box .lock{
+  font-size:10px;
+  color:var(--accent);
+  letter-spacing:0.1em;
+  margin-bottom:6px;
+}
+.secret-box textarea{
+  background:transparent;
+  border:none;
+  color:var(--text);
+  width:100%;
+  font-family:inherit;
+  font-size:13px;
+  font-weight:300;
+  outline:none;
+  min-height:60px;
+  resize:vertical;
+}
+
+.crux-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  padding:14px;
+}
+.crux-star{
+  border:1px solid var(--line);
+  padding:12px;
+  background:var(--bg-void);
+}
+.crux-star .name{
+  font-size:10px;
+  letter-spacing:0.15em;
+  color:var(--accent);
+  text-transform:uppercase;
+  margin-bottom:6px;
+}
+.crux-star textarea{
+  width:100%;
+  background:transparent;
+  border:none;
+  color:var(--text);
+  font-family:inherit;
+  font-size:12px;
+  font-weight:300;
+  outline:none;
+  min-height:50px;
+  resize:vertical;
+}
+.crux-star.warning{border-color:var(--warning);}
+
+.btn{
+  background:var(--bg-void);
+  border:1px solid var(--primary);
+  color:var(--accent);
+  padding:8px 18px;
+  font-size:12px;
+  letter-spacing:0.1em;
+  cursor:pointer;
+  font-family:inherit;
+  transition:all .2s;
+}
+.btn:hover{background:var(--primary);color:var(--bg-void);}
+.btn.small{padding:4px 12px;font-size:11px;}
+.btn.danger{border-color:var(--warning);color:var(--warning);}
+.btn.danger:hover{background:var(--warning);color:var(--bg-void);}
+
+.event-card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  padding:14px;
+  margin-bottom:10px;
+  cursor:pointer;
+}
+.event-card:hover{border-color:var(--primary);}
+.event-card.locked{opacity:0.7;border-style:dashed;}
+.event-card h4{font-size:14px;font-weight:400;margin-bottom:4px;}
+.event-card .meta{font-size:11px;color:var(--muted);}
+.event-card .chars{font-size:11px;color:var(--primary);margin-top:4px;}
+
+.checkbox-group{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
+.checkbox-group label{
+  font-size:12px;
+  color:var(--text);
+  display:flex;
+  align-items:center;
+  gap:4px;
+  cursor:pointer;
+}
+
+.codex-item{
+  border-bottom:1px solid var(--line);
+  padding:12px 0;
+}
+.codex-item:last-child{border-bottom:none;}
+.codex-item h4{font-size:13px;font-weight:400;color:var(--accent);margin-bottom:4px;}
+.codex-item p{font-size:12px;color:var(--muted);white-space:pre-wrap;}
+
+.sandbox-table{width:100%;border-collapse:collapse;font-size:12px;}
+.sandbox-table th,.sandbox-table td{
+  border:1px solid var(--line);
+  padding:8px 10px;
+  text-align:left;
+  color:var(--text);
+}
+.sandbox-table th{color:var(--accent);font-weight:400;letter-spacing:0.08em;font-size:10px;text-transform:uppercase;}
+
+.hint{font-size:11px;color:var(--muted);margin-top:6px;font-style:italic;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <button class="back" id="backBtn" style="visibility:hidden;">← 返回</button>
+    <h1 id="pageTitle">CRUX</h1>
+    <div style="width:60px;"></div>
+  </header>
+  <main id="content"></main>
+  <nav id="nav">
+    <button data-page="characters">角色</button>
+    <button data-page="codex">档案柜</button>
+    <button data-page="crux" class="crux-btn">CRUX</button>
+    <button data-page="events">事件</button>
+    <button data-page="sandbox">沙盘</button>
+  </nav>
+</div>
+<script>
+const STORAGE_KEY = 'crux_data_v1';
+
+let state = {
+  characters: [],
+  events: [],
+  codex: [],
+  currentPage: 'characters',
+  currentCharacterId: null,
+  currentEventId: null,
+  selectedCruxId: null,
+};
+
+function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const data = JSON.parse(raw);
+      state.characters = data.characters || [];
+      state.events = data.events || [];
+      state.codex = data.codex || [];
+    }
+  }catch(e){ console.warn('load error', e); }
+}
+function save(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    characters: state.characters,
+    events: state.events,
+    codex: state.codex,
+  }));
+}
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+function newCharacter(){
+  return {
+    id: uid(),
+    name: '新角色',
+    basic: { age:'', hair:'', eyes:'', height:'', build:'', features:'' },
+    personality: '',
+    backstory: '',
+    secret: '',
+    abilities: '',
+    likes: '',
+    dislikes: '',
+    fears: '',
+    crux: { acrux:'', mimosa:'', gacrux:'', imai:'' }
+  };
+}
+
+function newEvent(){
+  return {
+    id: uid(),
+    name: '新事件',
+    summary: '',
+    timeAnchor: '',
+    characterIds: [],
+    type: '相遇',
+    preEvent: '',
+    consequence: '',
+    locked: false,
+  };
+}
+
+const content = document.getElementById('content');
+const pageTitle = document.getElementById('pageTitle');
+const backBtn = document.getElementById('backBtn');
+const nav = document.getElementById('nav');
+
+function setPage(page){
+  state.currentPage = page;
+  state.currentCharacterId = null;
+  state.currentEventId = null;
+  render();
+}
+
+function render(){
+  document.querySelectorAll('nav button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.page === state.currentPage);
+  });
+  backBtn.style.visibility = 'hidden';
+  switch(state.currentPage){
+    case 'characters': renderCharacters(); break;
+    case 'codex': renderCodex(); break;
+    case 'crux': renderCrux(); break;
+    case 'events': renderEvents(); break;
+    case 'sandbox': renderSandbox(); break;
+  }
+}
+
+/* ---------- 角色列表 ---------- */
+function renderCharacters(){
+  pageTitle.textContent = '角色';
+  let html = '<button class="btn" id="addCharBtn" style="margin-bottom:16px;">+ 新建角色</button>';
+  if(state.characters.length === 0){
+    html += '<div class="empty"><span class="star">✧</span>这里还没有角色。<br>重力尚未开始拉扯。</div>';
+  } else {
+    state.characters.forEach(c=>{
+      html += `<div class="card" data-id="${c.id}">
+        <h3>${escapeHtml(c.name)}</h3>
+        <p>${escapeHtml(c.basic.height ? c.basic.height+' · ' : '')}${escapeHtml(c.basic.hair || '')}${c.basic.hair && c.basic.eyes ? ' · ' : ''}${escapeHtml(c.basic.eyes || '')}</p>
+        <div>${c.personality ? '<span class="tag">性格</span>' : ''}${c.secret ? '<span class="tag">秘密</span>' : ''}${c.abilities ? '<span class="tag">能力</span>' : ''}</div>
+      </div>`;
+    });
+  }
+  content.innerHTML = html;
+  document.getElementById('addCharBtn').onclick = ()=>{
+    const c = newCharacter();
+    state.characters.push(c);
+    save();
+    openCharacter(c.id);
+  };
+  content.querySelectorAll('.card').forEach(el=>{
+    el.onclick = ()=> openCharacter(el.dataset.id);
+  });
+}
+
+function openCharacter(id){
+  state.currentCharacterId = id;
+  state.currentPage = 'characterDetail';
+  renderCharacterDetail();
+}
+
+function renderCharacterDetail(){
+  const c = state.characters.find(x=>x.id === state.currentCharacterId);
+  if(!c){ setPage('characters'); return; }
+  pageTitle.textContent = c.name || '角色';
+  backBtn.style.visibility = 'visible';
+  backBtn.onclick = ()=> setPage('characters');
+
+  let html = `
+  <div class="section">
+    <div class="section-title">基础档案</div>
+    <div class="section-body">
+      <div class="field"><label>姓名</label><input data-field="name" value="${escapeAttr(c.name)}"></div>
+      <div class="field"><label>年龄</label><input data-field="basic.age" value="${escapeAttr(c.basic.age)}"></div>
+      <div class="field"><label>外观</label>
+        <div class="row">
+          <input data-field="basic.hair" placeholder="发色" value="${escapeAttr(c.basic.hair)}">
+          <input data-field="basic.eyes" placeholder="瞳色" value="${escapeAttr(c.basic.eyes)}">
+        </div>
+        <div class="row" style="margin-top:8px;">
+          <input data-field="basic.height" placeholder="身高" value="${escapeAttr(c.basic.height)}">
+          <input data-field="basic.build" placeholder="体型" value="${escapeAttr(c.basic.build)}">
+        </div>
+        <input data-field="basic.features" placeholder="标志特征" value="${escapeAttr(c.basic.features)}" style="margin-top:8px;">
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">性格光谱</div>
+    <div class="section-body">
+      <div class="field"><label>矛盾对 · 用 ↔ 分隔，例如：爱开玩笑 ↔ 哲学思辨</label>
+        <textarea data-field="personality">${escapeHtml(c.personality)}</textarea>
+      </div>
+      <div class="hint">追问：他在什么情况下会从左边滑向右边？</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">身世</div>
+    <div class="section-body">
+      <div class="field"><textarea data-field="backstory" style="min-height:100px;">${escapeHtml(c.backstory)}</textarea></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">秘密档案</div>
+    <div class="section-body">
+      <div class="secret-box">
+        <div class="lock">🔒 只有你和这个角色知道</div>
+        <textarea data-field="secret">${escapeHtml(c.secret)}</textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">战斗能力 · 博石</div>
+    <div class="section-body">
+      <div class="field"><textarea data-field="abilities" placeholder="博石类型、元素属性、能力等级、前置条件……">${escapeHtml(c.abilities)}</textarea></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">喜好 / 厌恶 / 恐惧</div>
+    <div class="section-body">
+      <div class="field"><label>喜好</label><textarea data-field="likes">${escapeHtml(c.likes)}</textarea></div>
+      <div class="field"><label>厌恶</label><textarea data-field="dislikes">${escapeHtml(c.dislikes)}</textarea></div>
+      <div class="field"><label>恐惧</label><textarea data-field="fears">${escapeHtml(c.fears)}</textarea></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">CRUX · 锚点</div>
+    <div class="crux-grid">
+      <div class="crux-star"><div class="name">Acrux · 不可动摇的信念</div><textarea data-field="crux.acrux">${escapeHtml(c.crux.acrux)}</textarea></div>
+      <div class="crux-star"><div class="name">Mimosa · 最大的恐惧</div><textarea data-field="crux.mimosa">${escapeHtml(c.crux.mimosa)}</textarea></div>
+      <div class="crux-star"><div class="name">Gacrux · 致命弱点</div><textarea data-field="crux.gacrux">${escapeHtml(c.crux.gacrux)}</textarea></div>
+      <div class="crux-star"><div class="name">Imai · 弧光目标</div><textarea data-field="crux.imai">${escapeHtml(c.crux.imai)}</textarea></div>
+    </div>
+  </div>
+
+  <button class="btn danger" id="deleteChar" style="margin-top:8px;">删除角色</button>
+  `;
+  content.innerHTML = html;
+
+  content.querySelectorAll('[data-field]').forEach(el=>{
+    el.oninput = ()=>{
+      const path = el.dataset.field.split('.');
+      let obj = c;
+      for(let i=0;i<path.length-1;i++) obj = obj[path[i]];
+      obj[path[path.length-1]] = el.value;
+      if(path[0]==='name') pageTitle.textContent = el.value || '角色';
+      save();
+    };
+  });
+
+  document.getElementById('deleteChar').onclick = ()=>{
+    if(confirm('确定删除这个角色？')){
+      state.characters = state.characters.filter(x=>x.id !== c.id);
+      save();
+      setPage('characters');
+    }
+  };
+}
+
+/* ---------- 档案柜 ---------- */
+function renderCodex(){
+  pageTitle.textContent = '档案柜';
+  let html = '<button class="btn" id="addCodexBtn" style="margin-bottom:16px;">+ 新建词条</button>';
+  if(state.codex.length === 0){
+    html += '<div class="empty"><span class="star">✧</span>世界观尚未凝固。<br>博石在暗处等待命名。</div>';
+  } else {
+    state.codex.forEach(item=>{
+      html += `<div class="codex-item" data-id="${item.id}">
+        <h4>${escapeHtml(item.title)}</h4>
+        <p>${escapeHtml(item.content)}</p>
+      </div>`;
+    });
+  }
+  content.innerHTML = html;
+  document.getElementById('addCodexBtn').onclick = ()=>{
+    const title = prompt('词条名称：');
+    if(!title) return;
+    const contentText = prompt('词条内容：') || '';
+    state.codex.push({ id: uid(), title, content: contentText });
+    save();
+    renderCodex();
+  };
+  content.querySelectorAll('.codex-item').forEach(el=>{
+    el.onclick = ()=>{
+      const item = state.codex.find(x=>x.id === el.dataset.id);
+      if(!item) return;
+      const newTitle = prompt('修改名称：', item.title);
+      if(newTitle === null) return;
+      const newContent = prompt('修改内容：', item.content);
+      if(newContent === null) return;
+      item.title = newTitle;
+      item.content = newContent;
+      save();
+      renderCodex();
+    };
+  });
+}
+
+/* ---------- CRUX ---------- */
+function renderCrux(){
+  pageTitle.textContent = 'CRUX';
+  if(state.characters.length === 0){
+    content.innerHTML = '<div class="empty"><span class="star">✧</span>没有角色，就没有锚点。<br>先去创建一个角色。</div>';
+    return;
+  }
+  if(!state.selectedCruxId || !state.characters.find(x=>x.id === state.selectedCruxId)){
+    state.selectedCruxId = state.characters[0].id;
+  }
+  let html = `<div class="field"><label>选择角色</label>
+    <select id="cruxSelect" style="width:100%;background:var(--bg-void);border:1px solid var(--line);color:var(--text);padding:8px;font-family:inherit;font-size:13px;">
+      ${state.characters.map(c=>`<option value="${c.id}" ${c.id===state.selectedCruxId?'selected':''}>${escapeHtml(c.name)}</option>`).join('')}
+    </select>
+  </div>`;
+  const c = state.characters.find(x=>x.id === state.selectedCruxId);
+  html += `<div class="crux-grid" style="padding:0;margin-top:12px;">
+    <div class="crux-star"><div class="name">Acrux · 不可动摇的信念</div><textarea data-crux="acrux">${escapeHtml(c.crux.acrux)}</textarea></div>
+    <div class="crux-star"><div class="name">Mimosa · 最大的恐惧</div><textarea data-crux="mimosa">${escapeHtml(c.crux.mimosa)}</textarea></div>
+    <div class="crux-star"><div class="name">Gacrux · 致命弱点</div><textarea data-crux="gacrux">${escapeHtml(c.crux.gacrux)}</textarea></div>
+    <div class="crux-star"><div class="name">Imai · 弧光目标</div><textarea data-crux="imai">${escapeHtml(c.crux.imai)}</textarea></div>
+  </div>
+  <div class="hint" style="margin-top:12px;">南十字不是正十字。角色的锚点也从不完美对称。</div>`;
+  content.innerHTML = html;
+  document.getElementById('cruxSelect').onchange = (e)=>{
+    state.selectedCruxId = e.target.value;
+    renderCrux();
+  };
+  content.querySelectorAll('[data-crux]').forEach(el=>{
+    el.oninput = ()=>{
+      c.crux[el.dataset.crux] = el.value;
+      save();
+    };
+  });
+}
+
+/* ---------- 事件 ---------- */
+function renderEvents(){
+  pageTitle.textContent = '事件';
+  let html = '<button class="btn" id="addEventBtn" style="margin-bottom:16px;">+ 新建事件</button>';
+  if(state.events.length === 0){
+    html += '<div class="empty"><span class="star">✧</span>还没有事件。<br>角色们尚未相遇。</div>';
+  } else {
+    state.events.forEach(ev=>{
+      const chars = ev.characterIds.map(id=>{
+        const c = state.characters.find(x=>x.id === id);
+        return c ? c.name : '?';
+      }).join('、');
+      html += `<div class="event-card ${ev.locked?'locked':''}" data-id="${ev.id}">
+        <h4>${escapeHtml(ev.name)} ${ev.locked?'🔒':''}</h4>
+        <div class="meta">${escapeHtml(ev.timeAnchor || '时间未定')} · ${escapeHtml(ev.type)}</div>
+        ${chars ? `<div class="chars">${escapeHtml(chars)}</div>` : ''}
+        ${ev.summary ? `<p style="font-size:12px;color:var(--muted);margin-top:4px;">${escapeHtml(ev.summary)}</p>` : ''}
+      </div>`;
+    });
+  }
+  content.innerHTML = html;
+  document.getElementById('addEventBtn').onclick = ()=>{
+    const ev = newEvent();
+    state.events.push(ev);
+    save();
+    openEvent(ev.id);
+  };
+  content.querySelectorAll('.event-card').forEach(el=>{
+    el.onclick = ()=> openEvent(el.dataset.id);
+  });
+}
+
+function openEvent(id){
+  state.currentEventId = id;
+  state.currentPage = 'eventDetail';
+  renderEventDetail();
+}
+
+function renderEventDetail(){
+  const ev = state.events.find(x=>x.id === state.currentEventId);
+  if(!ev){ setPage('events'); return; }
+  pageTitle.textContent = ev.name || '事件';
+  backBtn.style.visibility = 'visible';
+  backBtn.onclick = ()=> setPage('events');
+
+  const charChecks = state.characters.map(c=>`
+    <label><input type="checkbox" value="${c.id}" ${ev.characterIds.includes(c.id)?'checked':''}> ${escapeHtml(c.name)}</label>
+  `).join('');
+
+  let html = `
+  <div class="section">
+    <div class="section-title">事件档案</div>
+    <div class="section-body">
+      <div class="field"><label>名称</label><input data-field="name" value="${escapeAttr(ev.name)}"></div>
+      <div class="field"><label>一句话摘要</label><input data-field="summary" value="${escapeAttr(ev.summary)}"></div>
+      <div class="field"><label>时间锚点</label><input data-field="timeAnchor" value="${escapeAttr(ev.timeAnchor)}" placeholder="例如：抵达王都后的第三个雨季"></div>
+      <div class="field"><label>类型</label>
+        <select data-field="type" style="width:100%;background:var(--bg-void);border:1px solid var(--line);color:var(--text);padding:8px;font-family:inherit;font-size:13px;">
+          ${['相遇','冲突','情报交换','共同经历','分离','背叛'].map(t=>`<option ${ev.type===t?'selected':''}>${t}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>参与角色</label><div class="checkbox-group">${charChecks || '<span style="font-size:12px;color:var(--muted);">先去创建角色</span>'}</div></div>
+      <div class="field"><label>前置事件</label><textarea data-field="preEvent">${escapeHtml(ev.preEvent)}</textarea></div>
+      <div class="field"><label>后续影响</label><textarea data-field="consequence">${escapeHtml(ev.consequence)}</textarea></div>
+      <div class="field"><label><input type="checkbox" id="lockCheck" ${ev.locked?'checked':''}> 锁定为已确定的叙事事实</label></div>
+    </div>
+  </div>
+  <button class="btn danger" id="deleteEvent">删除事件</button>
+  `;
+  content.innerHTML = html;
+
+  content.querySelectorAll('[data-field]').forEach(el=>{
+    el.oninput = ()=>{
+      if(el.dataset.field === 'type'){
+        ev.type = el.value;
+      } else {
+        ev[el.dataset.field] = el.value;
+      }
+      if(el.dataset.field === 'name') pageTitle.textContent = el.value || '事件';
+      save();
+    };
+  });
+  content.querySelectorAll('.checkbox-group input[type=checkbox]').forEach(cb=>{
+    cb.onchange = ()=>{
+      const id = cb.value;
+      if(cb.checked){
+        if(!ev.characterIds.includes(id)) ev.characterIds.push(id);
+      } else {
+        ev.characterIds = ev.characterIds.filter(x=>x !== id);
+      }
+      save();
+    };
+  });
+  document.getElementById('lockCheck').onchange = (e)=>{
+    ev.locked = e.target.checked;
+    save();
+  };
+  document.getElementById('deleteEvent').onclick = ()=>{
+    if(confirm('确定删除这个事件？')){
+      state.events = state.events.filter(x=>x.id !== ev.id);
+      save();
+      setPage('events');
+    }
+  };
+}
+
+/* ---------- 沙盘 ---------- */
+function renderSandbox(){
+  pageTitle.textContent = '沙盘';
+  if(state.characters.length === 0){
+    content.innerHTML = '<div class="empty"><span class="star">✧</span>沙盘空无一物。<br>先创建角色和他们的博石能力。</div>';
+    return;
+  }
+  let html = '<div class="hint" style="margin-bottom:12px;">能力对比实验场。把角色放进同一张表，观察克制关系。</div>';
+  html += '<table class="sandbox-table"><thead><tr><th>角色</th><th>能力</th><th>CRUX 弱点</th></tr></thead><tbody>';
+  state.characters.forEach(c=>{
+    html += `<tr>
+      <td>${escapeHtml(c.name)}</td>
+      <td>${escapeHtml(c.abilities || '未定义')}</td>
+      <td>${escapeHtml(c.crux.gacrux || '未定义')}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  html += '<div class="hint" style="margin-top:12px;">追问：如果阿雅克修的重力操控有 3 秒冷却，对手的火焰博石能在窗口期做什么？</div>';
+  content.innerHTML = html;
+}
+
+/* ---------- 工具 ---------- */
+function escapeHtml(s){
+  if(s === undefined || s === null) return '';
+  return String(s).replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+}
+function escapeAttr(s){ return escapeHtml(s).replace(/"/g,'&quot;'); }
+
+/* ---------- 导航绑定 ---------- */
+nav.querySelectorAll('button').forEach(btn=>{
+  btn.onclick = ()=> setPage(btn.dataset.page);
+});
+
+/* ---------- 启动 ---------- */
+load();
+render();
+</script>
+</body>
+</html>
