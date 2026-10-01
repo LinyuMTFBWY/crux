@@ -61,6 +61,7 @@ header{
   justify-content:space-between;
   background:var(--bg-void);
   flex-shrink:0;
+  position: relative; /* 新增：为绝对定位提供参照 */
 }
 header h1{
   font-size:15px;
@@ -68,6 +69,10 @@ header h1{
   letter-spacing:0.15em;
   text-transform:uppercase;
   color:var(--accent);
+  position: absolute; /* 新增：绝对定位 */
+  left: 50%; /* 新增：移动到中间 */
+  transform: translateX(-50%); /* 新增：修正自身宽度偏移，实现完美居中 */
+  margin: 0;
 }
 header .back{
   background:none;
@@ -332,14 +337,24 @@ nav button.crux-btn:hover{background:var(--primary);color:var(--bg-void);}
 <body>
 <div id="app">
 <header>
-  <div style="display:flex;align-items:center;gap:4px;">
-    <button class="back" id="backBtn" style="visibility:hidden;">← 返回</button>
-    <button class="btn small" style="padding:2px 8px;font-size:10px;" id="exportBtn" title="导出全部数据（角色/事件/档案柜）">备份</button>
-    <button class="btn small" style="padding:2px 8px;font-size:10px;" id="importBtn" title="从备份恢复全部数据">导入</button>
-    <button class="btn small" style="padding:2px 8px;font-size:10px;" id="snapshotBtn" title="查看本地自动存储">迭代</button>
+  <!-- 左侧区域：按钮靠左 -->
+  <div style="display:flex;align-items:center;gap:8px;justify-content:flex-start;flex:1;z-index:1;">
+    <button class="back" id="backBtn" style="visibility:hidden;background:none;border:none;color:var(--muted);font-size:10px;cursor:pointer;">← 返回</button>
+    
+    <!-- 这里去掉了边框，改为淡灰色，缩小了字体和间距 -->
+    <button id="exportBtn" style="background:none;border:none;color:var(--muted);font-size:10px;padding:4px 6px;cursor:pointer;font-family:inherit;letter-spacing:0.05em;transition:color .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">备份</button>
+    <button id="importBtn" style="background:none;border:none;color:var(--muted);font-size:10px;padding:4px 6px;cursor:pointer;font-family:inherit;letter-spacing:0.05em;transition:color .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">导入</button>
+    <button id="snapshotBtn" style="background:none;border:none;color:var(--muted);font-size:10px;padding:4px 6px;cursor:pointer;font-family:inherit;letter-spacing:0.05em;transition:color .2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--muted)'">迭代</button>
   </div>
+
+  <!-- 中间标题 -->
   <h1 id="pageTitle">CRUX</h1>
-  <div id="syncBar" style="font-size:10px;letter-spacing:0.1em;cursor:pointer;" onclick="setupSync()">◌ 未连接云端</div>
+
+  <!-- 右侧区域：状态靠右 -->
+  <div style="flex:1;display:flex;justify-content:flex-end;z-index:1;">
+    <div id="syncBar" style="font-size:10px;letter-spacing:0.1em;cursor:pointer;color:var(--muted);" onclick="setupSync()">◌ 未连接云端</div>
+  </div>
+
   <input type="file" id="importFile" accept=".json" style="display:none;">
 </header>
   <main id="content"></main>
