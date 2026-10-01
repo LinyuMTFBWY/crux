@@ -331,12 +331,17 @@ nav button.crux-btn:hover{background:var(--primary);color:var(--bg-void);}
 </head>
 <body>
 <div id="app">
-  <header>
+<header>
+  <div style="display:flex;align-items:center;gap:4px;">
     <button class="back" id="backBtn" style="visibility:hidden;">← 返回</button>
-    <h1 id="pageTitle">CRUX</h1>
-<div id="syncBar" style="font-size:10px;letter-spacing:0.1em;cursor:pointer;" onclick="setupSync()">◌ 未连接云端</div>
-    <div style="width:60px;"></div>
-  </header>
+    <button class="btn small" style="padding:2px 8px;font-size:10px;" id="exportBtn" title="导出全部数据（角色/事件/档案柜）">备份</button>
+    <button class="btn small" style="padding:2px 8px;font-size:10px;" id="importBtn" title="从备份恢复全部数据">导入</button>
+    <button class="btn small" style="padding:2px 8px;font-size:10px;" id="snapshotBtn" title="查看本地自动存储">迭代</button>
+  </div>
+  <h1 id="pageTitle">CRUX</h1>
+  <div id="syncBar" style="font-size:10px;letter-spacing:0.1em;cursor:pointer;" onclick="setupSync()">◌ 未连接云端</div>
+  <input type="file" id="importFile" accept=".json" style="display:none;">
+</header>
   <main id="content"></main>
   <nav id="nav">
     <button data-page="characters">角色</button>
@@ -827,6 +832,7 @@ load();
   }
   render();
   updateSyncBar();
+  takeSnapshot();
 })();
 
 function saveWithoutSync(){
@@ -861,6 +867,102 @@ window.setupSync = async function(){
   updateSyncBar();
   alert('已连接云端。\n你的同步码是：' + id + '\n请记下来，在其他设备输入这个码即可同步。');
 };
+/* ---------- 备份系统 ---------- */
+
+document.getElementById('exportBtn').onclick = ()=>{
+  const data = {
+    version: '1.0',
+    exportedAt: new Date().toISOString(),
+    characters: state.characters,
+    events: state.events,
+    codex: state.codex,
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+  a.href = url;
+  a.download = 'crux-backup-' + stamp + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+document.getElementById('importBtn').onclick = ()=> document.getElementById('importFile').click();
+document.getElementById('importFile').onchange = e =>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev =>{
+    try{
+      const data = JSON.parse(ev.target.result);
+      if(!data.characters && !data.events && !data.codex){
+        alert('这不是 CRUX 的备份文件');
+        return;
+      }
+      if(!confirm('导入会覆盖当前所有数据。确定吗？')) return;
+      state.characters = data.characters || [];
+      state.events = data.events || [];
+      state.codex = data.codex || [];
+      save();
+      render();
+      alert('导入成功');
+    }catch(err){
+      alert('文件损坏，无法导入');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+};
+
+const SNAPSHOT_KEY = 'crux_snapshots_v1';
+const MAX_SNAPSHOTS = 10;
+
+function takeSnapshot(){
+  try{
+    const snapshots = JSON.parse(localStorage.getItem(SNAPSHOT_KEY) || '[]');
+    const snap = {
+      at: new Date().toISOString(),
+      characters: state.characters,
+      events: state.events,
+      codex: state.codex,
+    };
+    if(snapshots.length > 0){
+      const last = snapshots[snapshots.length - 1];
+      if(JSON.stringify(last.characters) === JSON.stringify(snap.characters)
+         && JSON.stringify(last.events) === JSON.stringify(snap.events)
+         && JSON.stringify(last.codex) === JSON.stringify(snap.codex)){
+        return;
+      }
+    }
+    snapshots.push(snap);
+    while(snapshots.length > MAX_SNAPSHOTS) snapshots.shift();
+    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(snapshots));
+  }catch(e){ console.warn('snapshot failed', e); }
+}
+
+document.getElementById('snapshotBtn').onclick = ()=>{
+  const snapshots = JSON.parse(localStorage.getItem(SNAPSHOT_KEY) || '[]');
+  if(snapshots.length === 0){ alert('还没有快照'); return; }
+  const list = snapshots.map((s,i)=>{
+    const t = new Date(s.at).toLocaleString('zh-CN');
+    const c = (s.characters||[]).length;
+    const ev = (s.events||[]).length;
+    return `${i+1}. ${t} — 角色 ${c}，事件 ${ev}`;
+  }).join('\n');
+  const choice = prompt('选择一个快照恢复（输入编号），或输入 0 取消：\n\n' + list);
+  const idx = parseInt(choice, 10);
+  if(!idx || idx < 1 || idx > snapshots.length) return;
+  const snap = snapshots[idx - 1];
+  if(!confirm('恢复这个快照会覆盖当前数据。确定吗？')) return;
+  state.characters = snap.characters || [];
+  state.events = snap.events || [];
+  state.codex = snap.codex || [];
+  save();
+  render();
+  alert('已恢复');
+};
+
+window.addEventListener('beforeunload', takeSnapshot);
 </script>
 </body>
 </html>
