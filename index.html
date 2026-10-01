@@ -341,8 +341,8 @@ nav button.crux-btn:hover{background:var(--primary);color:var(--bg-void);}
   </nav>
 </div>
 <script>
-const SUPABASE_URL = '把你复制的 Project URL 粘这里';
-const SUPABASE_KEY = '把你复制的 anon public 粘这里';
+const SUPABASE_URL = 'https://jpmcwxncxcxkvauzljby.supabase.co/rest/v1/';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwbWN3eG5jeGN4a3ZhdXpsamJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4NTc4OTcsImV4cCI6MjEwNjQzMzg5N30.gWl2nTX22jFB2WoaN57ybcVrykNvXXxAMjbLXAe6mvc';
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let SYNC_ID = localStorage.getItem('crux_sync_id') || null;
 let syncTimer = null;
